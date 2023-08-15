@@ -45,18 +45,31 @@ class ParseTweetsJSONtoHTML():
 
         output_html += f"<div class='tweet_content'>{self.parse_text_for_html(tweet_data['tweet_content'])}</div>"
 
-        if tweet_data["tweet_media_urls"]:
-            output_html += "<div class='tweet_images_wrapper'>"
-            for media_url in tweet_data["tweet_media_urls"]:
+        if tweet_data["tweet_video_urls"]:
+            output_html += "<div class='tweet_videos_wrapper'>"
+            for media_url in tweet_data["tweet_video_urls"]:
                 if self.download_images:
                     media_name = media_url.split("/")[-1]
-                    user_image_path = f'images/tweets/{media_name}'
-                    full_path = f"{self.output_html_directory}/{user_image_path}"
-                    self.save_remote_image(media_url, full_path)
+                    user_video_path = f'videos/tweets/{media_name}'
+                    full_path = f"{self.output_html_directory}/{user_video_path}"
+                    self.save_remote_video(media_url, full_path)
                 else:
-                    user_image_path = media_url
-                output_html += f"<div class='tweet_image'><a href='{user_image_path}' target='_blank'><img loading='lazy' src='{user_image_path}'></a></div>"
+                    user_video_path = media_url
+                output_html += f"<div class='tweet_video'><video controls preload='none' poster='{tweet_data['tweet_media_urls'][0]}'><a href='{user_video_path}' target='_blank'>Download video</a><source src='{user_video_path}' type='video/mp4' /></video></div>"
             output_html += "</div>\n"
+        else :
+            if tweet_data["tweet_media_urls"]:
+                output_html += "<div class='tweet_images_wrapper'>"
+                for media_url in tweet_data["tweet_media_urls"]:
+                    if self.download_images:
+                        media_name = media_url.split("/")[-1]
+                        user_image_path = f'images/tweets/{media_name}'
+                        full_path = f"{self.output_html_directory}/{user_image_path}"
+                        self.save_remote_image(media_url, full_path)
+                    else:
+                        user_image_path = media_url
+                    output_html += f"<div class='tweet_image'><a href='{user_image_path}' target='_blank'><img loading='lazy' src='{user_image_path}'></a></div>"
+                output_html += "</div>\n"
 
 
         parsed_datetime = datetime.datetime.strptime(tweet_data['tweet_created_at'], "%a %b %d %H:%M:%S +0000 %Y")
@@ -90,6 +103,14 @@ class ParseTweetsJSONtoHTML():
         img_data = requests.get(remote_url).content
         with open(local_path, 'wb') as handler:
             handler.write(img_data)
+
+    def save_remote_video(self, remote_url, local_path):
+        if os.path.exists(local_path):
+            return
+        print(f"Downloading video {remote_url}...")
+        video_data = requests.get(remote_url).content
+        with open(local_path, 'wb') as handler:
+            handler.write(video_data)
 
     def parse_text_for_html(self,input_text):
         return input_text.encode('ascii', 'xmlcharrefreplace').decode()
